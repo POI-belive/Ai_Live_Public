@@ -9,6 +9,9 @@ from qfluentwidgets import (NavigationInterface,NavigationItemPosition, Navigati
 from qfluentwidgets import FluentIcon as FIF
 from qframelesswindow import FramelessWindow, TitleBar
 
+#导入子界面
+from Pyqt.chat_interface import ChatInterface
+
 
 class Widget(QFrame):
 
@@ -106,7 +109,8 @@ class Window(FramelessWindow):
         self.stackWidget = QStackedWidget(self)
 
         # create sub interface(创建子接口)
-        self.chatInterface = Widget('Chat Interface', self)
+        self.chatInterface =ChatInterface(self)
+        # self.chatInterface = Widget('Chat Interface', self)
         self.photoInterface = Widget('Photo Interface', self)
         self.videoInterface = Widget('Video Interface', self)
         self.folderInterface = Widget('Folder Interface', self)
