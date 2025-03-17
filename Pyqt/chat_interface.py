@@ -1,8 +1,33 @@
-from PyQt5.QtCore import Qt
+import asyncio
+
+from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import QHBoxLayout, QTextEdit, QLineEdit, QPushButton, QFrame, QVBoxLayout, QWidget, QLabel, \
     QScrollArea
 from qfluentwidgets import PlainTextEdit, LineEdit, FluentIcon, ToolButton, PushButton
+from DeepSeekChat.deepseek_api import deepseek_chat
+from TTS.tts import tts
+
+#调用deepseek线程
+class ChatWorker(QThread):
+    resultSignal = pyqtSignal(str)  # 信号，传递 deepseek_chat 结果
+
+    def __init__(self, message):
+        super().__init__()
+        self.message = message
+
+    def run(self):
+        text = deepseek_chat(self.message)
+        self.resultSignal.emit(text)  # 发送结果信号
+
+#调用TTS线程
+class TTSThread(QThread):
+    def __init__(self, text):
+        super().__init__()
+        self.text = text
+
+    def run(self):
+        tts(self.text, character="胡桃")
 
 
 class ChatInterface(QFrame):
@@ -47,8 +72,8 @@ class ChatInterface(QFrame):
         self.vlayout.addWidget(self.scrollArea)
 
         # 初始化头像路径
-        self.you_avatar_path = 'avatars/you.png'
-        self.xiaoji_avatar_path = 'avatars/jmu.png'
+        self.you_avatar_path = 'resource/avatars/you.png'
+        self.DeepSeek_avatar_path = 'resource/avatars/deepseek.png'
 
 
         #添加输入框
@@ -72,10 +97,24 @@ class ChatInterface(QFrame):
         message = self.lineEdit.text()
         if message:
             # 将消息添加到聊天记录中
-            # self.textEdit.appendPlainText(f"你: {message}")
             self.addMessage('You',message)
             self.lineEdit.clear()
+            # text=deepseek_chat(message)
+            # self.addMessage('XiaoJi',text)
+            # tts(text, character="胡桃")
 
+            # 开启新线程处理 deepseek_chat
+            self.worker = ChatWorker(message)
+            self.worker.resultSignal.connect(self.handleResponse)
+            self.worker.start()
+
+    #回调函数，接收deepseek返回值
+    def handleResponse(self, text):
+        self.addMessage('DeepSeek', text)
+        self.ttsWorker = TTSThread(text)
+        self.ttsWorker.start()  # 在子线程播放 TTS
+
+    #创建聊天气泡
     def addMessage(self, sender, message):
         # 创建消息容器
         message_widget = QWidget()
@@ -91,8 +130,8 @@ class ChatInterface(QFrame):
             avatar_pixmap = QPixmap(self.you_avatar_path).scaled(
                 40, 40, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             avatar_label.setPixmap(avatar_pixmap)
-        elif sender == 'XiaoJi':
-            avatar_pixmap = QPixmap(self.xiaoji_avatar_path).scaled(
+        elif sender == 'DeepSeek':
+            avatar_pixmap = QPixmap(self.DeepSeek_avatar_path).scaled(
                 40, 40, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             avatar_label.setPixmap(avatar_pixmap)
 
@@ -117,7 +156,7 @@ class ChatInterface(QFrame):
             inner_layout.addWidget(message_label)
             inner_layout.addWidget(avatar_label)
             message_layout.addLayout(inner_layout)
-        elif sender == 'XiaoJi':
+        elif sender == 'DeepSeek':
             # 左侧对齐，白色背景，头像在左
             message_label.setStyleSheet("""
                 background-color: #FFFFFF;
