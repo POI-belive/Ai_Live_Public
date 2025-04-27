@@ -1,5 +1,3 @@
-import asyncio
-
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import QHBoxLayout, QTextEdit, QLineEdit, QPushButton, QFrame, QVBoxLayout, QWidget, QLabel, \
@@ -78,7 +76,7 @@ class ChatInterface(QFrame):
 
         #添加输入框
         self.lineEdit=LineEdit()
-        self.lineEdit.setText("杂鱼~从这里输入哦~")
+        # self.lineEdit.setText("杂鱼~从这里输入哦~")
 
         #添加发送按钮
         self.toolButton=ToolButton(FluentIcon.SEND,self)

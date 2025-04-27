@@ -10,7 +10,8 @@ from qfluentwidgets import FluentIcon as FIF
 from qframelesswindow import FramelessWindow, TitleBar
 
 #导入子界面
-from Pyqt.chat_interface import ChatInterface
+from chat_interface import ChatInterface
+from folder_interface import FolderInterface
 
 
 class Widget(QFrame):
@@ -111,7 +112,8 @@ class Window(FramelessWindow):
         # create sub interface(创建子接口)
         self.chatInterface =ChatInterface(self)
         # self.chatInterface = Widget('Chat Interface', self)
-        self.photoInterface = Widget('Photo Interface', self)
+        self.photoInterface=FolderInterface(self)
+        # self.photoInterface = Widget('Photo Interface', self)
         self.videoInterface = Widget('Video Interface', self)
         self.folderInterface = Widget('Folder Interface', self)
         self.settingInterface = Widget('Setting Interface', self)
@@ -133,6 +135,7 @@ class Window(FramelessWindow):
 
         self.titleBar.raise_()
         self.navigationInterface.displayModeChanged.connect(self.titleBar.raise_)
+
 
     def initNavigation(self):
         # enable acrylic effect

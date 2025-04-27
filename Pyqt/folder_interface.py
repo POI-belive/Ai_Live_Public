@@ -1,0 +1,280 @@
+# -*- coding: utf-8 -*-
+from PyQt5.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve, QAbstractAnimation
+from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QFrame, QWidget, QApplication, QLabel
+from qfluentwidgets import (
+    ScrollArea, PushButton, ElevatedCardWidget, BodyLabel, CaptionLabel,
+    FlowLayout, ImageLabel, MessageBox, isDarkTheme, FluentIcon, LineEdit, ToolButton
+)
+
+
+class VoiceModelCard(ElevatedCardWidget):
+    """ 语音模型卡片组件 """
+    clicked = pyqtSignal()
+
+    def __init__(self, iconPath: str, title: str, description: str, parent=None):
+        super().__init__(parent)
+        self.setFixedSize(240, 280)
+        self.iconPath = iconPath
+        self.title = title
+        self.description = description
+        self.isSelected = False
+
+        # 初始化方法调用
+        self.initUI()
+        self.initStyle()
+        self.initAnimation()
+
+    def initUI(self):
+        """ 初始化界面布局 """
+        mainLayout = QVBoxLayout(self)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
+        mainLayout.setSpacing(0)
+
+        # 图片区域
+        self.iconLabel = ImageLabel(self.iconPath)
+        self.iconLabel.setScaledContents(True)
+        self.iconLabel.setMinimumSize(240, 160)
+        self.iconLabel.setAlignment(Qt.AlignCenter)
+
+        # 分隔线
+        self.separator = QFrame()
+        self.separator.setFrameShape(QFrame.HLine)
+        self.separator.setFixedHeight(1)
+        self.separator.setStyleSheet("background-color: rgba(0, 0, 0, 0.1);")
+
+        # 文字区域
+        textContainer = QWidget()
+        textLayout = QVBoxLayout(textContainer)
+        textLayout.setContentsMargins(16, 12, 16, 16)
+        textLayout.setSpacing(8)
+        self.titleLabel = BodyLabel(self.title)
+        self.descLabel = CaptionLabel(self.description)
+        textLayout.addWidget(self.titleLabel, 0, Qt.AlignCenter)
+        textLayout.addWidget(self.descLabel, 0, Qt.AlignCenter)
+
+        # 组合布局
+        mainLayout.addWidget(self.iconLabel)
+        mainLayout.addWidget(self.separator)
+        mainLayout.addWidget(textContainer)
+
+    def initStyle(self):
+        """ 初始化样式 """
+        self.setBorderRadius(12)
+        self.setProperty('isSelected', 'false')
+        self.titleLabel.setObjectName("cardTitle")
+        self.descLabel.setObjectName("cardDesc")
+
+    def initAnimation(self):
+        """ 初始化动画效果 """
+        self.pressAnim = QPropertyAnimation(self, b"geometry")
+        self.pressAnim.setDuration(120)
+        self.pressAnim.setEasingCurve(QEasingCurve.OutQuad)
+
+    def setSelected(self, selected: bool):
+        """ 设置选中状态 """
+        self.isSelected = selected
+        self.setProperty('isSelected', 'true' if selected else 'false')
+        self.style().polish(self)
+
+        # 动态更新分隔线颜色
+        lineColor = "#666666" if selected else "rgba(0, 0, 0, 0.1)"
+        if isDarkTheme():
+            lineColor = "#AAAAAA" if selected else "rgba(255, 255, 255, 0.1)"
+        self.separator.setStyleSheet(f"background-color: {lineColor};")
+
+        # 选中动画效果
+        if selected:
+            anim = QPropertyAnimation(self, b"geometry")
+            anim.setDuration(200)
+            anim.setEasingCurve(QEasingCurve.OutBack)
+            anim.setStartValue(self.geometry())
+            anim.setEndValue(self.geometry().adjusted(-2, -2, 2, 2))
+            anim.start(QAbstractAnimation.DeleteWhenStopped)
+
+    def mousePressEvent(self, event):
+        """ 按压动画 """
+        self.pressAnim.stop()
+        self.pressAnim.setStartValue(self.geometry())
+        self.pressAnim.setEndValue(self.geometry().adjusted(0, 2, 0, 2))
+        self.pressAnim.start()
+        super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        """ 释放事件处理 """
+        self.pressAnim.setDirection(QPropertyAnimation.Backward)
+        self.pressAnim.start()
+        super().mouseReleaseEvent(event)
+        self.clicked.emit()
+
+
+class FolderInterface(QFrame):
+    """ 主界面"""
+    modelChanged = pyqtSignal(str)
+    characterChanged = pyqtSignal(str)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.currentModel = None
+        self.currentCharacter = "默认角色"
+
+        # 初始化流程
+        self.initUI()
+        self.initConnections()
+        self.loadDemoData()
+
+    def initUI(self):
+        """ 主界面初始化 """
+        self.setObjectName("FolderInterface")
+        self.setMinimumSize(800, 600)
+
+        # 主布局
+        mainLayout = QVBoxLayout(self)
+        mainLayout.setContentsMargins(0, 40, 0, 0)    #左上右下
+        mainLayout.setSpacing(0)
+
+        # 滚动区域
+        self.initScrollArea()
+        # 控制栏
+        self.initControlBar()
+        # 样式
+        self.initStyle()
+
+    def initScrollArea(self):
+        """ 初始化滚动区域 """
+        self.scrollArea = ScrollArea()
+        self.scrollArea.setWidgetResizable(True)
+
+        # 流式布局
+        self.flowLayout = FlowLayout(isTight=True, needAni=False)
+        self.flowLayout.setContentsMargins(20, 20, 20, 20)
+        self.flowLayout.setHorizontalSpacing(20)
+        self.flowLayout.setVerticalSpacing(20)
+
+        container = QWidget()
+        container.setLayout(self.flowLayout)
+        self.scrollArea.setWidget(container)
+
+        self.layout().addWidget(self.scrollArea)
+
+    def initControlBar(self):
+        """ 初始化底部控制栏 """
+        controlBar = QFrame()
+        controlBar.setFixedHeight(60)
+
+        # 切换按钮
+        self.switchButton = PushButton('切换语音模型')
+        self.switchButton.setIcon(FluentIcon.SYNC)
+        self.switchButton.setFixedSize(160, 36)
+
+        # 布局
+        controlLayout = QHBoxLayout(controlBar)
+        controlLayout.setContentsMargins(20, 0, 20, 0)
+        controlLayout.addStretch(1)
+        controlLayout.addWidget(self.switchButton)
+        controlLayout.addStretch(1)
+
+        self.layout().addWidget(controlBar)
+
+    def initConnections(self):
+        """ 初始化信号连接 """
+        self.switchButton.clicked.connect(self.handleModelSwitch)
+
+    def loadDemoData(self):
+        """ 加载演示数据 """
+        demoModels = [
+            {'iconPath': 'resource/model/model1.png', 'title': '甜美少女音', 'description': '适合对话场景的可爱声线'},
+            {'iconPath': 'resource/model/model2.png', 'title': '成熟御姐音', 'description': '专业播音级质量声线'},
+            {'iconPath': 'resource/model/model3.png', 'title': '磁性男声', 'description': '适合有声读物的低沉声线'},
+            {'iconPath': 'resource/model/model4.png', 'title': '卡通音效', 'description': '动画角色专用声线'},
+            {'iconPath': 'resource/model/model5.png', 'title': '甜美少女音', 'description': '适合对话场景的可爱声线'},
+            {'iconPath': 'resource/model/model6.png', 'title': '成熟御姐音', 'description': '专业播音级质量声线'},
+            {'iconPath': 'resource/model/model7.png', 'title': '磁性男声', 'description': '适合有声读物的低沉声线'},
+            {'iconPath': 'resource/model/model8.png', 'title': '卡通音效', 'description': '动画角色专用声线'},
+            {'iconPath': 'resource/model/model9.png', 'title': '磁性男声', 'description': '适合有声读物的低沉声线'},
+            {'iconPath': 'resource/model/model10.png', 'title': '卡通音效', 'description': '动画角色专用声线'},
+
+        ]
+
+        for model in demoModels:
+            card = VoiceModelCard(**model)
+            card.clicked.connect(lambda c=card: self.updateSelection(c))
+            self.flowLayout.addWidget(card)
+
+    def updateSelection(self, selectedCard):
+        """ 更新选中状态"""
+        for i in range(self.flowLayout.count()):
+            widget = self.flowLayout.itemAt(i).widget()
+            if isinstance(widget, VoiceModelCard):
+                widget.setSelected(widget is selectedCard)
+
+        self.currentModel = selectedCard.title if selectedCard.isSelected else None
+
+    def handleModelSwitch(self):
+        """ 处理模型切换"""
+        if self.currentModel:
+            self.modelChanged.emit(self.currentModel)
+            MessageBox('切换成功', f"已启用语音模型：{self.currentModel}", self).exec()
+        else:
+            MessageBox.warning(self, '操作失败', '请先选择要切换的语音模型')
+
+    # 公开接口方法
+    def switchModel(self, modelName: str):
+        """ 外部调用切换模型 """
+        for i in range(self.flowLayout.count()):
+            widget = self.flowLayout.itemAt(i).widget()
+            if isinstance(widget, VoiceModelCard) and widget.title == modelName:
+                self.updateSelection(widget)
+                break
+
+    def switchCharacter(self, character: str):
+        """ 切换角色形象 """
+        self.currentCharacter = character
+        self.characterChanged.emit(character)
+
+    def initStyle(self):
+        """ 初始化样式表 """
+        self.setStyleSheet("""
+        /* 基础样式 */
+        VoiceModelCard {
+            background-color: palette(base);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+        }
+        VoiceModelCard[isSelected="true"] {
+            border: 2px solid #666666;
+            background-color: rgba(128, 128, 128, 0.1);
+        }
+        #cardTitle {
+            font: 16px 'Microsoft YaHei';
+            color: #333;
+        }
+        #cardDesc {
+            font: 13px 'Microsoft YaHei';
+            color: #666;
+        }
+        /* 暗色主题适配 */
+        DarkTheme VoiceModelCard {
+            border-color: rgba(255, 255, 255, 0.1);
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        DarkTheme VoiceModelCard[isSelected="true"] {
+            border-color: #AAAAAA;
+            background-color: rgba(170, 170, 170, 0.1);
+        }
+        DarkTheme #cardTitle {
+            color: #FFFFFF;
+        }
+        DarkTheme #cardDesc {
+            color: #CCCCCC;
+        }
+        """)
+
+
+if __name__ == "__main__":
+    import sys
+
+    app = QApplication(sys.argv)
+    window = FolderInterface()
+    window.resize(1200, 800)
+    window.show()
+    sys.exit(app.exec_())
