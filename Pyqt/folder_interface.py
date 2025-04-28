@@ -143,6 +143,7 @@ class FolderInterface(QFrame):
         """ 初始化滚动区域 """
         self.scrollArea = ScrollArea()
         self.scrollArea.setWidgetResizable(True)
+        self.scrollArea.setFrameShape(QFrame.NoFrame)
 
         # 流式布局
         self.flowLayout = FlowLayout(isTight=True, needAni=False)

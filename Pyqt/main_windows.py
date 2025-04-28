@@ -9,9 +9,11 @@ from qfluentwidgets import (NavigationInterface,NavigationItemPosition, Navigati
 from qfluentwidgets import FluentIcon as FIF
 from qframelesswindow import FramelessWindow, TitleBar
 
+
 #导入子界面
 from chat_interface import ChatInterface
 from folder_interface import FolderInterface
+from Pyqt.setting_interface import SettingsCard, SettingsInterface
 
 
 class Widget(QFrame):
@@ -116,7 +118,8 @@ class Window(FramelessWindow):
         # self.photoInterface = Widget('Photo Interface', self)
         self.videoInterface = Widget('Video Interface', self)
         self.folderInterface = Widget('Folder Interface', self)
-        self.settingInterface = Widget('Setting Interface', self)
+        # self.settingInterface = Widget('Setting Interface', self)
+        self.settingInterface = SettingsInterface(self)
 
         # initialize layout(初始化布局)
         self.initLayout()
