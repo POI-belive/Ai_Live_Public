@@ -2,7 +2,7 @@ from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import QHBoxLayout, QTextEdit, QLineEdit, QPushButton, QFrame, QVBoxLayout, QWidget, QLabel, \
     QScrollArea
-from qfluentwidgets import PlainTextEdit, LineEdit, FluentIcon, ToolButton, PushButton
+from qfluentwidgets import PlainTextEdit, LineEdit, FluentIcon, ToolButton, PushButton, CommandBar, Action
 from DeepSeekChat.deepseek_api import deepseek_chat
 from TTS.tts import tts
 
@@ -20,17 +20,43 @@ class ChatWorker(QThread):
 
 #调用TTS线程
 class TTSThread(QThread):
-    def __init__(self, text):
+    def __init__(self, text,character):
         super().__init__()
         self.text = text
+        self.character = character
 
     def run(self):
-        tts(self.text, character="胡桃")
+        tts(self.text, character=self.character)
+
+class CommandBarWrapper(CommandBar):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        # 逐个添加动作
+        self.addAction(Action(FluentIcon.ADD, '添加', triggered=lambda: print("添加")))
+
+        # 添加分隔符
+        self.addSeparator()
+
+        # 批量添加动作
+        self.addActions([
+            Action(FluentIcon.EDIT, '编辑', checkable=True, triggered=lambda: print("编辑")),
+            Action(FluentIcon.COPY, '复制'),
+            Action(FluentIcon.SHARE, '分享'),
+        ])
+
+        # 添加始终隐藏的动作
+        self.addHiddenAction(Action(FluentIcon.SCROLL, '排序', triggered=lambda: print('排序')))
+        self.addHiddenAction(Action(FluentIcon.SETTING, '设置', shortcut='Ctrl+S'))
 
 
 class ChatInterface(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
+
+        self.current_character = "静静"
+
         self.setObjectName("ChatInterface")
         self.initUI()
         self.vlayout.setAlignment(Qt.AlignCenter)           #设置居中
@@ -51,9 +77,15 @@ class ChatInterface(QFrame):
         self.vlayout = QVBoxLayout(self)
         self.hlayout = QHBoxLayout(self)
 
+        #创建命令栏
+        self.commandBar = CommandBarWrapper(self)
+        self.vlayout.addWidget(self.commandBar)
+        self.commandBar.setStyleSheet("background-color: #f0f0f0;")
+
         # 创建滚动区域
         self.scrollArea = QScrollArea(self)
         self.scrollArea.setWidgetResizable(True)  # 允许内容自适应大小
+        self.scrollArea.setFrameShape(QFrame.NoFrame)
 
         # 创建聊天记录的布局
         self.chatLayout = QVBoxLayout()
@@ -109,7 +141,7 @@ class ChatInterface(QFrame):
     #回调函数，接收deepseek返回值
     def handleResponse(self, text):
         self.addMessage('DeepSeek', text)
-        self.ttsWorker = TTSThread(text)
+        self.ttsWorker = TTSThread(text,self.current_character)
         self.ttsWorker.start()  # 在子线程播放 TTS
 
     #创建聊天气泡

@@ -114,12 +114,15 @@ class Window(FramelessWindow):
         # create sub interface(创建子接口)
         self.chatInterface =ChatInterface(self)
         # self.chatInterface = Widget('Chat Interface', self)
-        self.photoInterface=FolderInterface(self)
+        self.chooseInterface=FolderInterface(self)
         # self.photoInterface = Widget('Photo Interface', self)
         self.videoInterface = Widget('Video Interface', self)
         self.folderInterface = Widget('Folder Interface', self)
         # self.settingInterface = Widget('Setting Interface', self)
         self.settingInterface = SettingsInterface(self)
+
+        # 连接角色改变信号
+        self.chooseInterface.characterChanged.connect(self.handleCharacterChanged)
 
         # initialize layout(初始化布局)
         self.initLayout()
@@ -128,6 +131,12 @@ class Window(FramelessWindow):
         self.initNavigation()
 
         self.initWindow()
+
+    def handleCharacterChanged(self, character):
+        """ 处理角色改变 """
+        if character:  # 确保不是None
+            self.chatInterface.current_character = character
+            print(f"已切换到角色: {character}")  # 调试输出
 
     def initLayout(self):
         self.hBoxLayout.setSpacing(0)
@@ -145,7 +154,7 @@ class Window(FramelessWindow):
         self.navigationInterface.setAcrylicEnabled(True)
 
         self.addSubInterface(self.chatInterface, FIF.CHAT, 'Chat')
-        self.addSubInterface(self.photoInterface, FIF.PHOTO, 'Photo library')
+        self.addSubInterface(self.chooseInterface, FIF.SYNC, 'Choose role')
         self.addSubInterface(self.videoInterface, FIF.VIDEO, 'Video library')
 
         self.navigationInterface.addSeparator()

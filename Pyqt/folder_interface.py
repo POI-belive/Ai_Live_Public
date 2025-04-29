@@ -115,11 +115,11 @@ class FolderInterface(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.currentModel = None
-        self.currentCharacter = "默认角色"
+        self.currentCharacter = None
 
         # 初始化流程
         self.initUI()
-        self.initConnections()
+        # self.initConnections()
         self.loadDemoData()
 
     def initUI(self):
@@ -176,23 +176,17 @@ class FolderInterface(QFrame):
 
         self.layout().addWidget(controlBar)
 
-    def initConnections(self):
-        """ 初始化信号连接 """
-        self.switchButton.clicked.connect(self.handleModelSwitch)
+    # def initConnections(self):
+    #     """ 初始化信号连接 """
+    #     self.switchButton.clicked.connect(self.handleModelSwitch)
 
     def loadDemoData(self):
         """ 加载演示数据 """
         demoModels = [
-            {'iconPath': 'resource/model/model1.png', 'title': '甜美少女音', 'description': '适合对话场景的可爱声线'},
-            {'iconPath': 'resource/model/model2.png', 'title': '成熟御姐音', 'description': '专业播音级质量声线'},
-            {'iconPath': 'resource/model/model3.png', 'title': '磁性男声', 'description': '适合有声读物的低沉声线'},
-            {'iconPath': 'resource/model/model4.png', 'title': '卡通音效', 'description': '动画角色专用声线'},
-            {'iconPath': 'resource/model/model5.png', 'title': '甜美少女音', 'description': '适合对话场景的可爱声线'},
-            {'iconPath': 'resource/model/model6.png', 'title': '成熟御姐音', 'description': '专业播音级质量声线'},
-            {'iconPath': 'resource/model/model7.png', 'title': '磁性男声', 'description': '适合有声读物的低沉声线'},
-            {'iconPath': 'resource/model/model8.png', 'title': '卡通音效', 'description': '动画角色专用声线'},
-            {'iconPath': 'resource/model/model9.png', 'title': '磁性男声', 'description': '适合有声读物的低沉声线'},
-            {'iconPath': 'resource/model/model10.png', 'title': '卡通音效', 'description': '动画角色专用声线'},
+            {'iconPath': 'resource/model/model1.png', 'title': '胡桃', 'description': '适合对话场景的可爱声线'},
+            {'iconPath': 'resource/model/model2.png', 'title': '静静', 'description': '专业播音级质量声线'},
+            {'iconPath': 'resource/model/model3.png', 'title': '晓晓', 'description': '适合有声读物的声线'},
+            {'iconPath': 'resource/model/model4.png', 'title': '云溪', 'description': '营销号专用声线'},
 
         ]
 
@@ -202,35 +196,53 @@ class FolderInterface(QFrame):
             self.flowLayout.addWidget(card)
 
     def updateSelection(self, selectedCard):
-        """ 更新选中状态"""
+        """ 更新选中状态并发射信号 """
         for i in range(self.flowLayout.count()):
             widget = self.flowLayout.itemAt(i).widget()
             if isinstance(widget, VoiceModelCard):
-                widget.setSelected(widget is selectedCard)
+                # 更新选中状态，这里会调用 setSelected 方法
+                is_selected = (widget is selectedCard)
+                widget.setSelected(is_selected)
 
-        self.currentModel = selectedCard.title if selectedCard.isSelected else None
+                # 如果是选中的卡片，更新当前角色
+                if is_selected:
+                    self.currentCharacter = widget.title
 
-    def handleModelSwitch(self):
-        """ 处理模型切换"""
-        if self.currentModel:
-            self.modelChanged.emit(self.currentModel)
-            MessageBox('切换成功', f"已启用语音模型：{self.currentModel}", self).exec()
-        else:
-            MessageBox.warning(self, '操作失败', '请先选择要切换的语音模型')
+        # 发射当前选中的角色名称
+        self.characterChanged.emit(self.currentCharacter)
+        print(f"发射角色信号: {self.currentCharacter}")  # 调试用
 
-    # 公开接口方法
-    def switchModel(self, modelName: str):
-        """ 外部调用切换模型 """
-        for i in range(self.flowLayout.count()):
-            widget = self.flowLayout.itemAt(i).widget()
-            if isinstance(widget, VoiceModelCard) and widget.title == modelName:
-                self.updateSelection(widget)
-                break
+    # def handleModelSwitch(self):
+    #     """ 处理模型切换"""
+    #     if self.currentModel:
+    #         self.modelChanged.emit(self.currentModel)
+    #         MessageBox('切换成功', f"已启用语音模型：{self.currentModel}", self).exec()
+    #     else:
+    #         MessageBox.warning(self, '操作失败', '请先选择要切换的语音模型')
 
-    def switchCharacter(self, character: str):
-        """ 切换角色形象 """
-        self.currentCharacter = character
-        self.characterChanged.emit(character)
+    # # 公开接口方法
+    # def switchModel(self, modelName: str):
+    #     """ 外部调用切换模型 """
+    #     for i in range(self.flowLayout.count()):
+    #         widget = self.flowLayout.itemAt(i).widget()
+    #         if isinstance(widget, VoiceModelCard) and widget.title == modelName:
+    #             self.updateSelection(widget)
+    #             break
+
+    # def switchCharacter(self, character: str):
+    #     """ 切换角色形象 """
+    #     self.currentCharacter = character
+    #     self.characterChanged.emit(character)
+
+    # def onCardClicked(self, clickedCard: VoiceModelCard):
+    #     """ 卡片点击逻辑，切换角色 """
+    #     for card in self.cards:
+    #         card.setSelected(card == clickedCard)
+    #
+    #     self.currentCharacter = clickedCard.title
+    #     print(f"当前角色切换为：{self.currentCharacter}")
+    #     self.characterChanged.emit(self.currentCharacter)
+
 
     def initStyle(self):
         """ 初始化样式表 """

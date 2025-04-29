@@ -41,6 +41,7 @@ class AppCard(CardWidget):
 
         self.moreButton.setFixedSize(32, 32)
 
+#后续通过变量传参
 def addAppCard():
     card = AppCard(
         icon=":/qfluentwidgets/images/logo.png",

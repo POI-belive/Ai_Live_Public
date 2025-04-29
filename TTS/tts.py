@@ -104,7 +104,7 @@ if __name__ == "__main__":
     # 指定输出设备的索引
     output_device_index = 5  # 例如，选择索引为2的设备
 
-    tts(text, character="胡桃",output_device_index =output_device_index )
+    tts(text, character="静静",output_device_index =output_device_index )
     # tts_multi_output(text, character="胡桃", output_device_index=output_device_index)
 
 #事实证明，对于直播来说，根本不需要虚拟声卡传递音频，直播软件会直接收取设备默认播放设备的音频
