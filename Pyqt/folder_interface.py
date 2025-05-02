@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve, QAbst
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QFrame, QWidget, QApplication, QLabel
 from qfluentwidgets import (
     ScrollArea, PushButton, ElevatedCardWidget, BodyLabel, CaptionLabel,
-    FlowLayout, ImageLabel, MessageBox, isDarkTheme, FluentIcon, LineEdit, ToolButton
+    FlowLayout, ImageLabel, MessageBox, isDarkTheme, FluentIcon, LineEdit, ToolButton, InfoBar, InfoBarPosition
 )
 
 
@@ -119,7 +119,6 @@ class FolderInterface(QFrame):
 
         # 初始化流程
         self.initUI()
-        # self.initConnections()
         self.loadDemoData()
 
     def initUI(self):
@@ -134,8 +133,6 @@ class FolderInterface(QFrame):
 
         # 滚动区域
         self.initScrollArea()
-        # 控制栏
-        self.initControlBar()
         # 样式
         self.initStyle()
 
@@ -157,28 +154,9 @@ class FolderInterface(QFrame):
 
         self.layout().addWidget(self.scrollArea)
 
-    def initControlBar(self):
-        """ 初始化底部控制栏 """
-        controlBar = QFrame()
-        controlBar.setFixedHeight(60)
 
-        # 切换按钮
-        self.switchButton = PushButton('切换语音模型')
-        self.switchButton.setIcon(FluentIcon.SYNC)
-        self.switchButton.setFixedSize(160, 36)
 
-        # 布局
-        controlLayout = QHBoxLayout(controlBar)
-        controlLayout.setContentsMargins(20, 0, 20, 0)
-        controlLayout.addStretch(1)
-        controlLayout.addWidget(self.switchButton)
-        controlLayout.addStretch(1)
 
-        self.layout().addWidget(controlBar)
-
-    # def initConnections(self):
-    #     """ 初始化信号连接 """
-    #     self.switchButton.clicked.connect(self.handleModelSwitch)
 
     def loadDemoData(self):
         """ 加载演示数据 """
@@ -187,6 +165,7 @@ class FolderInterface(QFrame):
             {'iconPath': 'resource/model/model2.png', 'title': '静静', 'description': '专业播音级质量声线'},
             {'iconPath': 'resource/model/model3.png', 'title': '晓晓', 'description': '适合有声读物的声线'},
             {'iconPath': 'resource/model/model4.png', 'title': '云溪', 'description': '营销号专用声线'},
+
 
         ]
 
@@ -211,37 +190,6 @@ class FolderInterface(QFrame):
         # 发射当前选中的角色名称
         self.characterChanged.emit(self.currentCharacter)
         print(f"发射角色信号: {self.currentCharacter}")  # 调试用
-
-    # def handleModelSwitch(self):
-    #     """ 处理模型切换"""
-    #     if self.currentModel:
-    #         self.modelChanged.emit(self.currentModel)
-    #         MessageBox('切换成功', f"已启用语音模型：{self.currentModel}", self).exec()
-    #     else:
-    #         MessageBox.warning(self, '操作失败', '请先选择要切换的语音模型')
-
-    # # 公开接口方法
-    # def switchModel(self, modelName: str):
-    #     """ 外部调用切换模型 """
-    #     for i in range(self.flowLayout.count()):
-    #         widget = self.flowLayout.itemAt(i).widget()
-    #         if isinstance(widget, VoiceModelCard) and widget.title == modelName:
-    #             self.updateSelection(widget)
-    #             break
-
-    # def switchCharacter(self, character: str):
-    #     """ 切换角色形象 """
-    #     self.currentCharacter = character
-    #     self.characterChanged.emit(character)
-
-    # def onCardClicked(self, clickedCard: VoiceModelCard):
-    #     """ 卡片点击逻辑，切换角色 """
-    #     for card in self.cards:
-    #         card.setSelected(card == clickedCard)
-    #
-    #     self.currentCharacter = clickedCard.title
-    #     print(f"当前角色切换为：{self.currentCharacter}")
-    #     self.characterChanged.emit(self.currentCharacter)
 
 
     def initStyle(self):

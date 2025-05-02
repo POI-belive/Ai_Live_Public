@@ -11,7 +11,7 @@ from qframelesswindow import FramelessWindow, TitleBar
 
 
 #导入子界面
-from chat_interface import ChatInterface
+from chat_interface import ChatInterface, CommandBarWrapper
 from folder_interface import FolderInterface
 from Pyqt.setting_interface import SettingsCard, SettingsInterface
 
@@ -132,8 +132,10 @@ class Window(FramelessWindow):
 
         self.initWindow()
 
+    #切换角色
     def handleCharacterChanged(self, character):
-        """ 处理角色改变 """
+        if character == "chooseInterface":
+            self.switchTo(self.chooseInterface)
         if character:  # 确保不是None
             self.chatInterface.current_character = character
             print(f"已切换到角色: {character}")  # 调试输出

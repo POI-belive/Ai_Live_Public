@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QApplication, QWidget, QScrollArea, QFrame
 from qfluentwidgets import CardWidget, IconWidget, BodyLabel, CaptionLabel, PushButton, TransparentToolButton, \
-    FluentIcon, GroupHeaderCardWidget, SwitchButton
+    FluentIcon, GroupHeaderCardWidget, SwitchButton, BoolValidator, QConfig, ConfigItem, qconfig, SwitchSettingCard
 
 
 #app卡片组件

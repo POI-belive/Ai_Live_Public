@@ -1,10 +1,13 @@
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import QHBoxLayout, QTextEdit, QLineEdit, QPushButton, QFrame, QVBoxLayout, QWidget, QLabel, \
-    QScrollArea
-from qfluentwidgets import PlainTextEdit, LineEdit, FluentIcon, ToolButton, PushButton, CommandBar, Action
+    QScrollArea, QStackedWidget
+from qfluentwidgets import PlainTextEdit, LineEdit, FluentIcon, ToolButton, PushButton, CommandBar, Action, qrouter
+from qfluentwidgets.components.widgets.frameless_window import FramelessWindow
+
 from DeepSeekChat.deepseek_api import deepseek_chat
 from TTS.tts import tts
+from qfluentwidgets import qrouter
 
 #调用deepseek线程
 class ChatWorker(QThread):
@@ -29,9 +32,12 @@ class TTSThread(QThread):
         tts(self.text, character=self.character)
 
 class CommandBarWrapper(CommandBar):
+    muteToggled = pyqtSignal(bool)  #静音信号
+
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.muted = False  # 初始不静音
 
         # 逐个添加动作
         self.addAction(Action(FluentIcon.ADD, '添加', triggered=lambda: print("添加")))
@@ -41,14 +47,40 @@ class CommandBarWrapper(CommandBar):
 
         # 批量添加动作
         self.addActions([
-            Action(FluentIcon.EDIT, '编辑', checkable=True, triggered=lambda: print("编辑")),
-            Action(FluentIcon.COPY, '复制'),
-            Action(FluentIcon.SHARE, '分享'),
+            Action(FluentIcon.MUTE, '静音', checkable=True, triggered=self.onMuteAction),
+            Action(FluentIcon.SYNC, '更换角色',triggered=self.onSyncAction),
+            Action(FluentIcon.DELETE, '清空',triggered=self.onDeleteAction),
         ])
 
         # 添加始终隐藏的动作
         self.addHiddenAction(Action(FluentIcon.SCROLL, '排序', triggered=lambda: print('排序')))
-        self.addHiddenAction(Action(FluentIcon.SETTING, '设置', shortcut='Ctrl+S'))
+        self.addHiddenAction(Action(FluentIcon.SETTING, '设置', shortcut='Ctrl+S',triggered=self.onSettingAction))
+
+    def onMuteAction(self,checked):
+        print("切换静音")
+        self.muted = checked
+        print("静音状态:", self.muted)
+        self.muteToggled.emit(self.muted)  # 发出信号
+
+    def onSyncAction(self):
+        print("切换角色")
+        parent_window = self.window()  # 获取顶层窗口
+        if isinstance(parent_window, FramelessWindow):
+            parent_window.switchTo(parent_window.chooseInterface)
+
+    def onDeleteAction(self):
+        print(("清空聊天框"))
+        # 通知 ChatInterface 执行清空操作
+        parent_interface = self.parent()
+        if hasattr(parent_interface, 'clearChat'):
+            parent_interface.clearChat()
+
+    def onSettingAction(self):
+        print("切换设置界面")
+        parent_window = self.window()  # 获取顶层窗口
+        if isinstance(parent_window, FramelessWindow):
+            parent_window.switchTo(parent_window.settingInterface)
+
 
 
 class ChatInterface(QFrame):
@@ -59,6 +91,12 @@ class ChatInterface(QFrame):
 
         self.setObjectName("ChatInterface")
         self.initUI()
+
+        # 静音信号初始化
+        self.commandBar.muteToggled.connect(self.onMuteToggled)
+        self.muted = False  # 默认不静音
+
+        #界面初始化
         self.vlayout.setAlignment(Qt.AlignCenter)           #设置居中
         self.vlayout.setContentsMargins(200, 40, 200, 20)   # 设置布局的边距（左、上、右、下）
 
@@ -141,8 +179,16 @@ class ChatInterface(QFrame):
     #回调函数，接收deepseek返回值
     def handleResponse(self, text):
         self.addMessage('DeepSeek', text)
-        self.ttsWorker = TTSThread(text,self.current_character)
-        self.ttsWorker.start()  # 在子线程播放 TTS
+        if not self.muted:
+            self.ttsWorker = TTSThread(text, self.current_character)
+            self.ttsWorker.start()      #子线程中调用TTS
+        else:
+            print("静音中，未调用TTS")
+
+    #静音信号
+    def onMuteToggled(self, muted):
+        self.muted = muted
+        print("ChatInterface收到静音状态:", self.muted)
 
     #创建聊天气泡
     def addMessage(self, sender, message):
@@ -221,3 +267,12 @@ class ChatInterface(QFrame):
         # 自动滚动到最底部
         self.scrollArea.verticalScrollBar().setValue(
             self.scrollArea.verticalScrollBar().maximum())
+
+    #清空聊天气泡
+    def clearChat(self):
+        while self.chatLayout.count():
+            item = self.chatLayout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+        print("聊天记录已清空")
