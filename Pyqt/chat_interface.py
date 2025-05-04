@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QHBoxLayout, QTextEdit, QLineEdit, QPushButton, QFra
 from qfluentwidgets import PlainTextEdit, LineEdit, FluentIcon, ToolButton, PushButton, CommandBar, Action, qrouter
 from qfluentwidgets.components.widgets.frameless_window import FramelessWindow
 
+from DateBase.knowledgeQA import KnowledgeQA
 from DeepSeekChat.deepseek_api import deepseek_chat
 from TTS.tts import tts
 from qfluentwidgets import qrouter
@@ -13,12 +14,16 @@ from qfluentwidgets import qrouter
 class ChatWorker(QThread):
     resultSignal = pyqtSignal(str)  # 信号，传递 deepseek_chat 结果
 
-    def __init__(self, message):
+    def __init__(self, message, qa_instance=None):
         super().__init__()
         self.message = message
 
+        #传入知识库实例
+        self.qa = qa_instance
+
     def run(self):
-        text = deepseek_chat(self.message)
+        # text = deepseek_chat(self.message)
+        text = self.qa.ask(self.message)    #传入知识库
         self.resultSignal.emit(text)  # 发送结果信号
 
 #调用TTS线程
@@ -91,6 +96,9 @@ class ChatInterface(QFrame):
 
         self.setObjectName("ChatInterface")
         self.initUI()
+
+        #初始化知识库实例（可传入知识库地址）
+        self.qa_instance = KnowledgeQA()  # 或者你自己的路径
 
         # 静音信号初始化
         self.commandBar.muteToggled.connect(self.onMuteToggled)
@@ -172,7 +180,7 @@ class ChatInterface(QFrame):
             # tts(text, character="胡桃")
 
             # 开启新线程处理 deepseek_chat
-            self.worker = ChatWorker(message)
+            self.worker = ChatWorker(message, self.qa_instance)
             self.worker.resultSignal.connect(self.handleResponse)
             self.worker.start()
 
