@@ -15,7 +15,7 @@ def deepseek_chat(message, model="deepseek-chat", messages=None):
 
 
     #添加用户对话内容
-    messages.append({"role": "user", "content": "你是一个介绍员，请以通俗易懂的语言介绍以下我提出的问题，并尽量将回答控制在100字以内"+ message})
+    messages.append({"role": "user", "content": "你是一个介绍员，请以通俗易懂的语言介绍以下我提出的问题，并尽量将回答控制在100字以内，不需要用小括号标注回答字数"+ message})
 
     #添加上一轮回复
     if history_messages:
@@ -44,6 +44,7 @@ def deepseek_chat(message, model="deepseek-chat", messages=None):
 def clear_chat():
     global history_messages
     history_messages=""
+    print("多轮对话缓存已清除")
 
 #调用案例
 if __name__ == "__main__":

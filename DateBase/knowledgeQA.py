@@ -11,7 +11,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 from DeepSeekChat.deepseek_api import deepseek_chat
 
-data_path=r'jmu_data\output.json'
+# data_path=r'jmu_data\output.json'
 class KnowledgeQA:
     def __init__(self,
                  data_path: str = None,
@@ -94,7 +94,7 @@ class KnowledgeQA:
     def call_llm(self, question: str, background_list=None):
         if background_list:
             background = "\n\n".join(background_list)
-            prompt = f'{question}，请你根据以下背景知识以及结合你的资料回答我的问题, 若背景知识不包含相关内容，则调用你自己的资料库，建议你的回答在100字以内：\n\n{background}'
+            prompt = f'{question}，请你根据以下背景知识以及结合你的资料回答我的问题, 若背景知识不包含相关内容，则调用你自己的资料库，建议你的回答在100字以内,不需要用小括号标注回答字数：\n\n{background}'
         else:
             prompt = question
         return deepseek_chat(prompt)

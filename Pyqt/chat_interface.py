@@ -6,9 +6,13 @@ from qfluentwidgets import PlainTextEdit, LineEdit, FluentIcon, ToolButton, Push
 from qfluentwidgets.components.widgets.frameless_window import FramelessWindow
 
 from DateBase.knowledgeQA import KnowledgeQA
-from DeepSeekChat.deepseek_api import deepseek_chat
-from TTS.tts import tts
+from DeepSeekChat.deepseek_api import deepseek_chat, clear_chat
+
 from qfluentwidgets import qrouter
+from TTS.play_tts import tts
+
+
+
 
 #调用deepseek线程
 class ChatWorker(QThread):
@@ -79,6 +83,7 @@ class CommandBarWrapper(CommandBar):
         parent_interface = self.parent()
         if hasattr(parent_interface, 'clearChat'):
             parent_interface.clearChat()
+            clear_chat()
 
     def onSettingAction(self):
         print("切换设置界面")
